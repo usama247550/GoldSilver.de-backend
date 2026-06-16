@@ -9,6 +9,7 @@ connectDataBase()
 import news from "./routes/news.js"
 import price from "./routes/price.js"
 import subscribe from "./routes/subscribe.js"
+import summary from "./routes/summary.js"
 
 
 
@@ -21,7 +22,7 @@ app.use(express.json());
 app.use('/api/news', news);
 app.use('/api/prices', price);
 app.use('/api/subscribe', subscribe);
-
+app.use('/api/summary', summary);
 
 
 const PORT = process.env.PORT || 5000;

@@ -12,7 +12,7 @@ async function summarize(articles, topic) {
     .join('\n\n');
 
   const prompt = `You are a gold and silver financial analyst writing for German investors.
-      
+
 Topic: ${topic}
 
 Here are today's news headlines:
@@ -23,45 +23,76 @@ SUMMARY: [2-3 sentence summary in English]
 CONCLUSION: [bullish OR bearish OR neutral]
 DIRECTION: [up OR down OR neutral]`;
 
-  const models = [
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
-    'gemini-1.5-flash-8b'
-  ];
+  // Flag to enable/disable Grok usage (default true). Set USE_GROK=false in .env to bypass Grok.
+  const ENABLE_GROK = process.env.USE_GROK !== 'false';
 
-  let textContent = '';
+  
+let textContent = '';
 
-  for (const modelName of models) {
+  if (ENABLE_GROK) {
+    // ─── GROK AI ──────────────────────────────────────────────
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      const grokResponse = await fetch(
+        'https://api.x.ai/v1/chat/completions',
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.XAI_API_KEY}`
+          },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
+            model: 'grok-3-mini',
+            messages: [
+              { role: 'system', content: 'You are a financial news analyst.' },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.3
           })
         }
       );
 
-      if (!response.ok) continue;
+      console.log('Grok Status:', grokResponse.status);
 
-      const data = await response.json();
-      textContent = data?.candidates?.[0]?.content?.parts
-        ?.map(part => part.text || '')
-        .join('\n')
-        .trim() || '';
-
-      if (textContent) break;
-
+      if (grokResponse.ok) {
+        const grokData = await grokResponse.json();
+        console.log('Grok Response:', JSON.stringify(grokData, null, 2));
+        textContent = grokData?.choices?.[0]?.message?.content?.trim() || '';
+      } else if (grokResponse.status === 403) {
+        // Specific handling for permission errors – likely missing credits.
+        const errText = await grokResponse.text();
+        console.warn('Grok permission denied (403):', errText);
+      } else {
+        const errText = await grokResponse.text();
+        console.error('Grok non‑OK response:', errText);
+      }
     } catch (err) {
-      continue;
+      console.error('Grok API Error:', err.message);
     }
   }
 
+  // ─── FALLBACK IF GROK FAILS OR DISABLED ───────────────────────
   if (!textContent) {
+    // If Grok was disabled or failed, use a deterministic fallback.
+    // Option A: simple title list (current behavior).
+    // Option B: explicit placeholder indicating missing credits.
+    const placeholder = process.env.USE_GROK === 'false' ?
+      'Summary unavailable – XAI credits are not configured.' :
+      null;
+
+    if (placeholder) {
+      return {
+        summary: placeholder,
+        conclusion: 'neutral',
+        direction: 'neutral'
+      };
+    }
+
+    const fallback = articles
+      .slice(0, 3)
+      .map(a => a.title)
+      .join('. ');
     return {
-      summary: 'No summary available.',
+      summary: fallback || 'No summary available.',
       conclusion: 'neutral',
       direction: 'neutral'
     };
