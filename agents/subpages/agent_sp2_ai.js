@@ -11,21 +11,7 @@ const SOURCES = [
   "https://www.elektroniknet.de",
 ];
 
-// async function run() {
-//   console.log(`[SP2] Starting AI & Tech agent...`);
-//   const allArticles = [];
-//   for (const url of SOURCES) {
-//     const articles = await scrapeUrl(url);
-//     allArticles.push(...articles.slice(0, 3));
-//   }
-//   const result = await summarize(allArticles, TOPIC);
-//   await NewsItem.create({
-//     subpageId: SUBPAGE_ID, date: new Date(),
-//     summary: result.summary, conclusion: result.conclusion,
-//     direction: result.direction, createdAt: new Date()
-//   });
-//   console.log(`[SP2] Done ✅ Conclusion: ${result.conclusion}`);
-// }
+
 
 async function run() {
   console.log(`[SP2] Starting macro agent...`);

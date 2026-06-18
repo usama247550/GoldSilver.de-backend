@@ -10,25 +10,11 @@ const SOURCES = [
   'https://www.anwalt.de/rechtstipps/erbrecht',
 ];
 
-// async function run() {
-//   console.log(`[SP4] Starting Estate agent...`);
-//   const allArticles = [];
-//   for (const url of SOURCES) {
-//     const articles = await scrapeUrl(url);
-//     allArticles.push(...articles.slice(0, 3));
-//   }
-//   const result = await summarize(allArticles, TOPIC);
-//   await NewsItem.create({
-//     subpageId: SUBPAGE_ID, date: new Date(),
-//     summary: result.summary, conclusion: result.conclusion,
-//     direction: result.direction, createdAt: new Date()
-//   });
-//   console.log(`[SP4] Done ✅ Conclusion: ${result.conclusion}`);
-// }
+
 
 
 async function run() {
-  console.log(`[SP1] Starting macro agent...`);
+  console.log(`[sp4] Starting macro agent...`);
 
   // 1. Scrape all sources
   const allArticles = [];
@@ -38,11 +24,11 @@ async function run() {
       const articles = await scrapeUrl(url);
       allArticles.push(...articles.slice(0, 3));
     } catch (err) {
-      console.error(`[SP1] Failed source ${url}: ${err.message}`);
+      console.error(`[sp4] Failed source ${url}: ${err.message}`);
     }
   }
 
-  console.log(`[SP1] Total articles collected: ${allArticles.length}`);
+  console.log(`[sp4] Total articles collected: ${allArticles.length}`);
 
   // 2. Remove duplicates
   const cleaned = [...new Map(
@@ -62,6 +48,6 @@ async function run() {
     createdAt: new Date()
   });
 
-  console.log(`[SP1] Done ✅ Conclusion: ${result.conclusion}`);
+  console.log(`[sp4] Done ✅ Conclusion: ${result.conclusion}`);
 }
 export default run

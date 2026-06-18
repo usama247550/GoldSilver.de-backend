@@ -10,24 +10,10 @@ const SOURCES = [
   'https://www.benchpeg.com/news',
 ];
 
-// async function run() {
-//   console.log(`[SP10] Starting Goldsmith agent...`);
-//   const allArticles = [];
-//   for (const url of SOURCES) {
-//     const articles = await scrapeUrl(url);
-//     allArticles.push(...articles.slice(0, 3));
-//   }
-//   const result = await summarize(allArticles, TOPIC);
-//   await NewsItem.create({
-//     subpageId: SUBPAGE_ID, date: new Date(),
-//     summary: result.summary, conclusion: result.conclusion,
-//     direction: result.direction, createdAt: new Date()
-//   });
-//   console.log(`[SP10] Done ✅ Conclusion: ${result.conclusion}`);
-// }
+
 
 async function run() {
-  console.log(`[SP1] Starting macro agent...`);
+  console.log(`[sp10] Starting macro agent...`);
 
   // 1. Scrape all sources
   const allArticles = [];
@@ -37,11 +23,11 @@ async function run() {
       const articles = await scrapeUrl(url);
       allArticles.push(...articles.slice(0, 3));
     } catch (err) {
-      console.error(`[SP1] Failed source ${url}: ${err.message}`);
+      console.error(`[sp10] Failed source ${url}: ${err.message}`);
     }
   }
 
-  console.log(`[SP1] Total articles collected: ${allArticles.length}`);
+  console.log(`[sp10] Total articles collected: ${allArticles.length}`);
 
   // 2. Remove duplicates
   const cleaned = [...new Map(
@@ -61,6 +47,6 @@ async function run() {
     createdAt: new Date()
   });
 
-  console.log(`[SP1] Done ✅ Conclusion: ${result.conclusion}`);
+  console.log(`[sp10] Done ✅ Conclusion: ${result.conclusion}`);
 }
 export default run
