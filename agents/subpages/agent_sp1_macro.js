@@ -1,9 +1,59 @@
+// import scrapeUrl from '../scraper.js';
+// import summarize from '../summarizer.js';
+// import NewsItem from '../../models/NewsItem.js';
+
+// const SUBPAGE_ID = 'sp1';
+// const TOPIC = 'Central Bank Macro-Tracking & Geopolitical Forecasting';
+// const SOURCES = [
+//   'https://www.handelsblatt.com/finanzen',
+//   'https://www.faz.net/aktuell/finanzen',
+//   'https://www.cashkurs.com',
+//   'https://www.godmode-trader.de',
+//   'https://www.makroskop.eu',
+// ];
+
+// async function run() {
+//   console.log(`[SP1] Starting macro agent...`);
+
+// const cleaned = [...new Map(
+//   allArticles.map(a => [a.title, a])
+// ).values()];
+
+//   // Scrape all sources
+//   const allArticles = [];
+//   for (const url of SOURCES) {
+//     const articles = await scrapeUrl(url);
+//     allArticles.push(...articles.slice(0, 3)); // max 3 per source
+//   }
+
+//   console.log(`[SP1] Total articles collected: ${allArticles.length}`);
+
+//   // AI summarize
+//   const result = await summarize(cleaned, TOPIC);
+
+//   // MongoDB mein save karo
+//   await NewsItem.create({
+//     subpageId: SUBPAGE_ID,
+//     date: new Date(),
+//     summary: result.summary,
+//     conclusion: result.conclusion,
+//     direction: result.direction,
+//     createdAt: new Date()
+//   });
+
+//   console.log(`[SP1] Done ✅ Conclusion: ${result.conclusion}`);
+// }
+
+
+// export default run
+
 import scrapeUrl from '../scraper.js';
 import summarize from '../summarizer.js';
 import NewsItem from '../../models/NewsItem.js';
 
 const SUBPAGE_ID = 'sp1';
 const TOPIC = 'Central Bank Macro-Tracking & Geopolitical Forecasting';
+
 const SOURCES = [
   'https://www.handelsblatt.com/finanzen',
   'https://www.faz.net/aktuell/finanzen',
@@ -15,19 +65,29 @@ const SOURCES = [
 async function run() {
   console.log(`[SP1] Starting macro agent...`);
 
-  // Scrape all sources
+  // 1. Scrape all sources
   const allArticles = [];
+
   for (const url of SOURCES) {
-    const articles = await scrapeUrl(url);
-    allArticles.push(...articles.slice(0, 3)); // max 3 per source
+    try {
+      const articles = await scrapeUrl(url);
+      allArticles.push(...articles.slice(0, 3));
+    } catch (err) {
+      console.error(`[SP1] Failed source ${url}: ${err.message}`);
+    }
   }
 
   console.log(`[SP1] Total articles collected: ${allArticles.length}`);
 
-  // AI summarize
-  const result = await summarize(allArticles, TOPIC);
+  // 2. Remove duplicates
+  const cleaned = [...new Map(
+    allArticles.map(a => [a.title, a])
+  ).values()];
 
-  // MongoDB mein save karo
+  // 3. Summarize
+  const result = await summarize(cleaned, TOPIC);
+
+  // 4. Save to DB
   await NewsItem.create({
     subpageId: SUBPAGE_ID,
     date: new Date(),
@@ -40,5 +100,4 @@ async function run() {
   console.log(`[SP1] Done ✅ Conclusion: ${result.conclusion}`);
 }
 
-
-export default run
+export default run;

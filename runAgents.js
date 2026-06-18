@@ -16,7 +16,7 @@ import sp11 from './agents/subpages/agent_sp11_jewelry.js';
 import sp12 from './agents/subpages/agent_sp12_bullion.js';
 
 await mongoose.connect(process.env.MONGODB_URL);
-console.log('✅ MongoDB Connected!');
+console.log('MongoDB Connected!');
 
 const agents = [sp1, sp2, sp3, sp4, sp5, sp6, sp7, sp8, sp9, sp10, sp11, sp12];
 
@@ -24,10 +24,10 @@ for (const agent of agents) {
   try {
     await agent();
   } catch (err) {
-    console.error('❌ Agent Error:', err.message);
+    console.error(' Agent Error:', err.message);
   }
 }
 
-console.log('✅ All Agents Done!');
+console.log(' All Agents Done!');
 await mongoose.disconnect();
 process.exit(0);
