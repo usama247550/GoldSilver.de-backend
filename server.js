@@ -21,7 +21,6 @@ app.use('/api/summary', summary);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-// ✅ Scheduler sirf DB connect hone KE BAAD
 connectDataBase().then(() => {
   import("./agents/scheduler.js");
 });
