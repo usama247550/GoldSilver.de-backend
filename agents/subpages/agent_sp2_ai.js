@@ -5,13 +5,17 @@ import NewsItem from "../../models/NewsItem.js";
 const SUBPAGE_ID = "sp2";
 const TOPIC = "AI, Semiconductors & Tech";
 const SOURCES = [
-  "https://www.heise.de/themen/ki",
-  "https://t3n.de/tag/künstliche-intelligenz",
-  "https://www.golem.de/specials/künstliche-intelligenz",
-  "https://www.elektroniknet.de",
+  // "https://www.wired.com/tag/artificial-intelligence/",
+  // "https://feeds.arstechnica.com/arstechnica/technology-lab",
+  // "https://www.sciencedaily.com/rss/computers_math/artificial_intelligence.xml",
+  // "https://www.technologyreview.com/topic/artificial-intelligence/feed",
+
+  "https://www.chip.de",
+  "https://www.computerbase.de",
+  "https://mixed.de",
+  "https://www.basicthinking.de",
+  "https://winfuture.de",
 ];
-
-
 
 async function run() {
   console.log(`[SP2] Starting macro agent...`);
