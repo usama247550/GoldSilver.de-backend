@@ -1,52 +1,91 @@
-import scrapeUrl from '../scraper.js';
-import summarize from '../summarizer.js';
-import NewsItem from '../../models/NewsItem.js';
+import scrapeUrl from "../scraper.js";
+import summarize from "../summarizer.js";
+import NewsItem from "../../models/NewsItem.js";
 
-const SUBPAGE_ID = 'sp5';
-const TOPIC = 'Green Energy & Solar Infrastructure';
+const SUBPAGE_ID = "sp5";
+const TOPIC = "Green Energy & Solar Infrastructure";
+
 const SOURCES = [
-  'https://www.pv-magazine.de',
-  'https://www.cleanthinking.de',
-  'https://www.energiezukunft.eu',
+  "https://www.pv-magazine.de",
+  "https://www.cleanthinking.de",
+  "https://www.energiezukunft.eu",
 ];
 
-
-
 async function run() {
-  console.log(`[sp5] Starting macro agent...`);
+  console.log(`[SP5] Starting agent...`);
 
-  // 1. Scrape all sources
   const allArticles = [];
 
+  // 1. Scrape
   for (const url of SOURCES) {
     try {
       const articles = await scrapeUrl(url);
-      allArticles.push(...articles.slice(0, 3));
+
+      if (Array.isArray(articles)) {
+        allArticles.push(...articles.slice(0, 3));
+      }
     } catch (err) {
-      console.error(`[sp5] Failed source ${url}: ${err.message}`);
+      console.error(`[SP5] Failed source ${url}: ${err.message}`);
     }
   }
 
-  console.log(`[sp5] Total articles collected: ${allArticles.length}`);
+  console.log(`[SP5] Total articles collected: ${allArticles.length}`);
 
-  // 2. Remove duplicates
-  const cleaned = [...new Map(
-    allArticles.map(a => [a.title, a])
-  ).values()];
+  console.log("[SP5] RAW SAMPLE:", allArticles.slice(0, 3));
 
-  // 3. Summarize
-  const result = await summarize(cleaned, TOPIC);
+  // 2. Normalize + Deduplicate (IMPORTANT FIX)
+  const cleaned = [
+    ...new Map(
+      allArticles
+        .map((a) => ({
+          title: (a.title || a.headline || a.text || "").trim(),
+          url: (a.url || a.link || "").trim(),
+          source: a.source || "unknown",
+        }))
+        .filter((a) => a.title.length > 5 && a.url.length > 5)
+        .map((a) => [a.url, a]) // unique key = URL
+    ).values(),
+  ];
 
-  // 4. Save to DB
-  await NewsItem.create({
-    subpageId: SUBPAGE_ID,
-    date: new Date(),
-    summary: result.summary,
-    conclusion: result.conclusion,
-    direction: result.direction,
-    createdAt: new Date()
-  });
+  console.log(`[SP5] After dedup: ${cleaned.length}`);
 
-  console.log(`[sp5] Done ✅ Conclusion: ${result.conclusion}`);
+  if (!cleaned.length) {
+    console.log(`[SP5] No articles found, skipping DB save`);
+    return;
+  }
+
+  const finalArticles = cleaned.slice(0, 3);
+
+  console.log(`[SP5] Final articles selected: ${finalArticles.length}`);
+
+  // 3. Save each article separately
+  for (const article of finalArticles) {
+    try {
+      const summary = await summarize([article], TOPIC);
+
+      await NewsItem.create({
+        subpageId: SUBPAGE_ID,
+
+        headline: article.title,
+        sourceUrl: article.url,
+
+        summary: summary?.summary || "no-summary",
+        conclusion: summary?.conclusion || "neutral",
+        direction: summary?.direction || "neutral",
+
+        date: new Date(),
+        createdAt: new Date(),
+      });
+
+      console.log(`[SP5] Saved: ${article.title}`);
+    } catch (err) {
+      console.error(`[SP5] SAVE ERROR:`, err.message);
+    }
+  }
+
+  console.log(
+    `[SP5] Done ✅ Saved ${finalArticles.length} articles for ${SUBPAGE_ID}`
+  );
 }
-export default run
+
+export default run;

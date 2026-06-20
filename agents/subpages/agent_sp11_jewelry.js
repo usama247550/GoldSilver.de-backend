@@ -1,52 +1,89 @@
-import scrapeUrl from '../scraper.js';
-import summarize from '../summarizer.js';
-import NewsItem from '../../models/NewsItem.js';
+import scrapeUrl from "../scraper.js";
+import summarize from "../summarizer.js";
+import NewsItem from "../../models/NewsItem.js";
 
-const SUBPAGE_ID = 'sp11';
-const TOPIC = 'Fine Jewelry Resale & Wearable Wealth';
+const SUBPAGE_ID = "sp11";
+const TOPIC = "Fine Jewelry Resale & Wearable Wealth";
+
 const SOURCES = [
-  'https://www.therealreal.com/blog',
-  'https://www.sothebys.com/en/articles',
-  'https://www.1stdibs.com/blogs',
+  "https://blog.vestiairecollective.com/",
+  "https://www.fashionphile.com/blog",
+  "https://www.rebag.com/thevault/",
+  "https://www.forbes.com/luxury/",
 ];
-
-
-
 async function run() {
-  console.log(`[sp11] Starting macro agent...`);
+  console.log(`[SP11] Starting agent...`);
 
-  // 1. Scrape all sources
   const allArticles = [];
 
+  // 1. Scrape
   for (const url of SOURCES) {
     try {
       const articles = await scrapeUrl(url);
-      allArticles.push(...articles.slice(0, 3));
+
+      if (Array.isArray(articles)) {
+        allArticles.push(...articles.slice(0, 3));
+      }
     } catch (err) {
-      console.error(`[sp11] Failed source ${url}: ${err.message}`);
+      console.error(`[SP11] Failed source ${url}: ${err.message}`);
     }
   }
 
-  console.log(`[sp11] Total articles collected: ${allArticles.length}`);
+  console.log(`[SP11] Total articles collected: ${allArticles.length}`);
 
-  // 2. Remove duplicates
-  const cleaned = [...new Map(
-    allArticles.map(a => [a.title, a])
-  ).values()];
+  // 2. Normalize + Deduplicate (IMPORTANT FIX)
+  const cleaned = [
+    ...new Map(
+      allArticles
+        .map((a) => ({
+          title: (a.title || a.headline || a.text || "").trim(),
+          url: (a.url || a.link || "").trim(),
+          source: a.source || "unknown",
+        }))
+        .filter((a) => a.title.length > 5 && a.url.length > 5)
+        .map((a) => [a.url, a]) // unique key = URL
+    ).values(),
+  ];
 
-  // 3. Summarize
-  const result = await summarize(cleaned, TOPIC);
+  console.log(`[SP11] After dedup: ${cleaned.length}`);
 
-  // 4. Save to DB
-  await NewsItem.create({
-    subpageId: SUBPAGE_ID,
-    date: new Date(),
-    summary: result.summary,
-    conclusion: result.conclusion,
-    direction: result.direction,
-    createdAt: new Date()
-  });
+  if (!cleaned.length) {
+    console.log(`[SP11] No articles found, skipping DB save`);
+    return;
+  }
 
-  console.log(`[sp11] Done ✅ Conclusion: ${result.conclusion}`);
+  const finalArticles = cleaned.slice(0, 3);
+
+  console.log(`[SP11] Final articles selected: ${finalArticles.length}`);
+
+  // 3. Save each article separately
+  for (const article of finalArticles) {
+    try {
+      const summary = await summarize([article], TOPIC);
+
+      await NewsItem.create({
+        subpageId: SUBPAGE_ID,
+
+        headline: article.title,
+        sourceUrl: article.url,
+
+        summary: summary?.summary || "no-summary",
+        conclusion: summary?.conclusion || "neutral",
+        direction: summary?.direction || "neutral",
+
+        date: new Date(),
+        createdAt: new Date(),
+      });
+
+      console.log(`[SP11] Saved: ${article.title}`);
+    } catch (err) {
+      console.error(`[SP11] SAVE ERROR:`, err.message);
+    }
+  }
+
+  console.log(
+    `[SP11] Done ✅ Saved ${finalArticles.length} articles for ${SUBPAGE_ID}`
+  );
 }
-export default run
+
+export default run;
