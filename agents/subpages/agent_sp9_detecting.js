@@ -30,7 +30,6 @@ async function run() {
   }
 
   console.log(`[SP9] Total articles collected: ${allArticles.length}`);
-  console.log("[SP9] RAW SAMPLE:", allArticles.slice(0, 3));
 
   // 2. Normalize + Deduplicate (FIXED)
   const cleaned = [
