@@ -33,9 +33,8 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// DB connect + scheduler start
 connectDataBase().then(() => {
   import("./agents/scheduler.js").then(() => {
-    console.log("[SERVER] Scheduler loaded successfully 🚀");
+    console.log("[SERVER] Scheduler loaded successfully");
   });
 });

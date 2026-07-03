@@ -4,7 +4,6 @@ import NewsItem from "../models/NewsItem.js";
 
 router.get('/:subpageId', async (req, res) => {
   try {
-    // Fetch the latest 10 news items for the requested subpage
     const news = await NewsItem.find({ subpageId: req.params.subpageId })
       .sort({ createdAt: -1 })
       .limit(3);
