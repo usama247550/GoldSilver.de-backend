@@ -5,7 +5,7 @@ const SubscriberSchema = new mongoose.Schema({
   source:      { type: String, default: 'homepage' },
   subscribedAt:{ type: Date, default: Date.now },
   active:      { type: Boolean, default: true },
-  gdprConsent: { type: Boolean, required: true }  // GDPR law — must be true
+  gdprConsent: { type: Boolean, required: true } 
 });
 
 const Subscriber = mongoose.model('Subscriber', SubscriberSchema);
