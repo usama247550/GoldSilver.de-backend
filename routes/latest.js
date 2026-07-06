@@ -3,22 +3,30 @@ import NewsItem from "../models/NewsItem.js";
 
 const router = express.Router();
 
-/**
- * GET /api/new/random?limit=10
- * "Browse all" feed — random items from the whole collection,
- * shuffled fresh on every request.
- */
-router.get("/random", async (req, res) => {
+router.get("/latest", async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit, 10) || 10;
+    const perCategory = parseInt(req.query.perCategory) || 1;
 
-    const news = await NewsItem.aggregate([
-      { $sample: { size: limit } },
+    const latestNews = await NewsItem.aggregate([
+      { $sort: { date: -1 } },
+      {
+        $group: {
+          _id: "$subpageId",
+          items: { $push: "$$ROOT" },
+        },
+      },
+      {
+        $project: {
+          items: { $slice: ["$items", perCategory] },
+        },
+      },
+      { $unwind: "$items" },
+      { $replaceRoot: { newRoot: "$items" } },
+      { $sort: { date: -1 } },
     ]);
 
-    res.status(200).json(news);
+    res.json(latestNews);
   } catch (err) {
-    console.error("Random API Error:", err);
     res.status(500).json({ error: err.message });
   }
 });
