@@ -1,5 +1,3 @@
-
-
 async function summarize(articles, topic) {
   if (!articles.length) {
     return {
@@ -35,7 +33,6 @@ DIRECTION: [up OR down OR neutral]
 
   const ENABLE_GROK = process.env.USE_GROK !== "false";
   let textContent = "";
-
   if (ENABLE_GROK) {
     try {
       const grokResponse = await fetch("https://api.x.ai/v1/chat/completions", {
@@ -45,7 +42,7 @@ DIRECTION: [up OR down OR neutral]
           Authorization: `Bearer ${process.env.XAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "grok-3-mini",
+          model: "grok-4.3",
           messages: [
             { role: "system", content: "You are a financial news analyst." },
             { role: "user", content: prompt },

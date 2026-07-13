@@ -1,7 +1,3 @@
-
-
-
-
 import express from "express";
 import Price from "../models/Price.js";
 

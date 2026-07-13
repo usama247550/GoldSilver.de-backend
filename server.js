@@ -1,6 +1,3 @@
-
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -14,6 +11,7 @@ import price from "./routes/price.js";
 import subscribe from "./routes/subscribe.js";
 import summary from "./routes/summary.js";
 import searchRoutes from "./routes/searchRoutes.js";
+import latest from "./routes/latest.js";
 
 const app = express();
 
@@ -26,6 +24,7 @@ app.use("/api/prices", price);
 app.use("/api/subscribe", subscribe);
 app.use("/api/summary", summary);
 app.use("/api/search", searchRoutes);
+app.use("/api/new", latest);
 
 const PORT = process.env.PORT || 5000;
 
@@ -33,9 +32,8 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// DB connect + scheduler start
 connectDataBase().then(() => {
   import("./agents/scheduler.js").then(() => {
-    console.log("[SERVER] Scheduler loaded successfully 🚀");
+    console.log("[SERVER] Scheduler loaded successfully");
   });
 });
