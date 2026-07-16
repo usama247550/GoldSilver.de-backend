@@ -1,6 +1,3 @@
-
-
-
 async function summarize(articles, topic) {
   if (!articles.length) {
     return {
@@ -36,7 +33,6 @@ DIRECTION: [up OR down OR neutral]
 
   const ENABLE_GROK = process.env.USE_GROK !== "false";
   let textContent = "";
-
   if (ENABLE_GROK) {
     try {
       const grokResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
