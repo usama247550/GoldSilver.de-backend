@@ -1,5 +1,6 @@
 
 
+
 async function summarize(articles, topic) {
   if (!articles.length) {
     return {
@@ -38,14 +39,14 @@ DIRECTION: [up OR down OR neutral]
 
   if (ENABLE_GROK) {
     try {
-      const grokResponse = await fetch("https://api.x.ai/v1/chat/completions", {
+      const grokResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.XAI_API_KEY}`,
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "grok-3-mini",
+          model: "llama-3.3-70b-versatile",
           messages: [
             { role: "system", content: "You are a financial news analyst." },
             { role: "user", content: prompt },

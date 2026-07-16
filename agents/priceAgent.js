@@ -14,11 +14,12 @@ async function run() {
         headers: { "x-access-token": process.env.METALS_API_KEY },
       }),
     ]);
+
     const [goldData, silverData] = await Promise.all([
       goldRes.json(),
       silverRes.json(),
     ]);
-
+ 
     // ───────── CRYPTO ─────────
     const cryptoRes = await fetch(
       "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd",
@@ -53,7 +54,10 @@ async function run() {
     const newEth = cryptoData.ethereum?.usd ?? 0;
     const newEur = fxData.rates?.USD ?? 0;
     const newCpi = cpiValue;
+    
+    
 
+    console.log("[FINAL VALUES] gold:", newGold, "silver:", newSilver);
     // ───────── DB UPDATE ─────────
     await Price.findOneAndUpdate(
       {},
@@ -77,9 +81,10 @@ async function run() {
       { upsert: true, new: true },
     );
 
-    console.log("[PRICE AGENT] Prices updated ✅");
+    console.log("[PRICE AGENT] Prices updated");
   } catch (err) {
     console.error("[PRICE AGENT ERROR]", err.message);
+      console.error(err.stack);
   }
 }
 

@@ -4,9 +4,8 @@
 
 import cron from "node-cron";
 import priceAgent from "./priceAgent.js";
-// import { runAllAgents } from "./runAgents.js"; // 👈 ADD THIS
 import { runAllAgents } from "../runAgents.js";
-// 🚀 Bootstrap function
+//  Bootstrap function
 const startScheduler = async () => {
   console.log("[SCHEDULER] Starting...");
 
@@ -16,11 +15,11 @@ const startScheduler = async () => {
     console.error("[STARTUP PRICE ERROR]", err.message);
   }
 
-  // 🔥 RUN ON SERVER START
+  //  RUN ON SERVER START
   console.log("[STARTUP] Running all agents...");
   await runAllAgents();
 
-  console.log("[SCHEDULER] Initialized ✅");
+  console.log("[SCHEDULER] Initialized ");
 
   // ───── DAILY NEWS AGENTS ─────
   cron.schedule(
@@ -28,7 +27,7 @@ const startScheduler = async () => {
     async () => {
       console.log("[SCHEDULER] Running daily agents...");
       await runAllAgents();
-      console.log("[SCHEDULER] All agents done ✅");
+      console.log("[SCHEDULER] All agents done ");
     },
     { timezone: "Europe/Berlin" }
   );
