@@ -5,11 +5,12 @@ import NewsItem from "../../models/NewsItem.js";
 const SUBPAGE_ID = "sp12";
 const TOPIC = "Gold & Silver Coins and Bars";
 
+
+
 const SOURCES = [
-  "https://www.gold.de/news",
-  "https://www.goldreporter.de",
-  "https://www.kitco.com/news/gold",
-  "https://www.lbma.org.uk/news",
+  "https://www.coinnews.net",
+  "https://www.coinworld.com/news",
+  "https://www.coinweek.com",
 ];
 
 async function run() {
@@ -83,7 +84,7 @@ async function run() {
   }
 
   console.log(
-    `[SP12] Done ✅ Saved ${finalArticles.length} articles for ${SUBPAGE_ID}`
+    `[SP12] Done Saved ${finalArticles.length} articles for ${SUBPAGE_ID}`
   );
 }
 
