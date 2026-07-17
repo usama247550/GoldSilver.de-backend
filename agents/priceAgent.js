@@ -19,7 +19,7 @@ async function run() {
       goldRes.json(),
       silverRes.json(),
     ]);
- 
+
     // ───────── CRYPTO ─────────
     const cryptoRes = await fetch(
       "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd",
