@@ -21,21 +21,25 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
   "https://www.goldsilver.de",
-  "https://goldsilver.de"
-].map(url => url ? url.trim().replace(/\/$/, "") : null).filter(Boolean);
+  "https://goldsilver.de",
+]
+  .map((url) => (url ? url.trim().replace(/\/$/, "") : null))
+  .filter(Boolean);
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, curl, or server-to-server)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.warn(`[CORS] Blocked request from origin: ${origin}`);
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`[CORS] Blocked request from origin: ${origin}`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  }),
+);
 
 app.use(express.json());
 
