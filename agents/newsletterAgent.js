@@ -1,4 +1,5 @@
 import NewsItem from "../models/NewsItem.js";
+import Subscriber from "../models/Subscriber.js";
 
 const LIST_ID_MAP = {
   sp1: 3,
@@ -13,6 +14,22 @@ const LIST_ID_MAP = {
   sp10: 12,
   sp11: 13,
   sp12: 11,
+};
+
+const SOURCE_TO_SUBPAGE = {
+  macro: "sp1",
+  AiTech: "sp2",
+  storage: "sp3",
+  estate: "sp4",
+  GreenEnergy: "sp5",
+  scrapMetal: "sp6",
+  offgrid: "sp7",
+  numismatics: "sp8",
+  MetalDetecting: "sp9",
+  Goldsmithing: "sp10",
+  JewelryResale: "sp11",
+  coinsBars: "sp12",
+  homepage: "sp1",
 };
 
 const SUBPAGE_LABELS = {
@@ -44,6 +61,25 @@ const SUBPAGE_URLS = {
   sp11: "JewelryResale",
   sp12: "coinsBars",
 };
+
+export async function getTopNewsItems(subpageId) {
+  const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  let items = await NewsItem.find({
+    subpageId,
+    createdAt: { $gte: oneWeekAgo },
+  })
+    .sort({ clicks: -1, createdAt: -1 })
+    .limit(5);
+
+  if (!items || items.length === 0) {
+    items = await NewsItem.find({ subpageId })
+      .sort({ clicks: -1, createdAt: -1 })
+      .limit(5);
+  }
+
+  return items;
+}
 
 function buildEmailHtml(subpageId, items) {
   const label = SUBPAGE_LABELS[subpageId] || subpageId;
@@ -135,25 +171,126 @@ async function sendCampaignToList(subpageId, listId, htmlContent) {
   }
 }
 
-async function sendWeeklyNewsletters() {
+function getISOWeekString(date = new Date()) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+}
+
+function isSunday1759InTimezone(timeZone, date = new Date()) {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: timeZone || "Europe/Berlin",
+      weekday: "short",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(date);
+    let weekday, hour;
+    for (const part of parts) {
+      if (part.type === "weekday") weekday = part.value;
+      if (part.type === "hour") hour = parseInt(part.value, 10);
+    }
+    return weekday === "Sun" && hour === 17;
+  } catch (err) {
+    return false;
+  }
+}
+
+export async function sendWeeklyNewslettersTimezoneAware() {
+  const currentWeek = getISOWeekString();
+
+  try {
+    const activeSubscribers = await Subscriber.find({ active: true });
+
+  
+
+    if (activeSubscribers && activeSubscribers.length > 0) {
+      for (const sub of activeSubscribers) {
+        const isSunday = isSunday1759InTimezone(sub.timezone);
+        console.log(
+          `[NEWSLETTER-TZ][DEBUG] Subscriber: email=${sub.email} | source=${sub.source} | timezone=${sub.timezone} | lastSentWeek=${sub.lastSentWeek || "null"} | isSunday1759=${isSunday}`
+        );
+      }
+    }
+    // ── END DEBUG LOGS ──────────────────────────────────────────────────────
+
+    if (!activeSubscribers || activeSubscribers.length === 0) {
+      return;
+    }
+
+    const eligibleSubscribers = activeSubscribers.filter((sub) => {
+      if (sub.lastSentWeek === currentWeek) return false;
+      return isSunday1759InTimezone(sub.timezone);
+    });
+
+    if (eligibleSubscribers.length === 0) {
+      return;
+    }
+
+    console.log(`[NEWSLETTER-TZ] Found ${eligibleSubscribers.length} eligible subscriber(s) for Sunday 17:59.`);
+
+    const grouped = {};
+    for (const sub of eligibleSubscribers) {
+      const subpageId = SOURCE_TO_SUBPAGE[sub.source] || "sp1";
+      if (!grouped[subpageId]) grouped[subpageId] = [];
+      grouped[subpageId].push(sub);
+    }
+
+    for (const [subpageId, subs] of Object.entries(grouped)) {
+      const items = await getTopNewsItems(subpageId);
+      if (!items || items.length === 0) continue;
+
+      const html = buildEmailHtml(subpageId, items);
+      const label = SUBPAGE_LABELS[subpageId] || subpageId;
+
+      if (process.env.BREVO_API_KEY) {
+        for (const sub of subs) {
+          try {
+            await fetch("https://api.brevo.com/v3/smtp/email", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "api-key": process.env.BREVO_API_KEY,
+              },
+              body: JSON.stringify({
+                sender: {
+                  name: "GoldSilver.de",
+                  email: process.env.NEWSLETTER_SENDER_EMAIL,
+                },
+                to: [{ email: sub.email }],
+                subject: `Your Weekly ${label} Update from GoldSilver.de`,
+                htmlContent: html,
+              }),
+            });
+          } catch (sendErr) {
+            console.error(`[NEWSLETTER-TZ] Error sending to ${sub.email}:`, sendErr.message);
+          }
+        }
+      }
+
+      const subIds = subs.map((s) => s._id);
+      await Subscriber.updateMany(
+        { _id: { $in: subIds } },
+        { lastSentWeek: currentWeek, lastNewsletterSentAt: new Date() }
+      );
+    }
+  } catch (err) {
+    console.error("[NEWSLETTER-TZ] Timezone newsletter error:", err.message);
+  }
+}
+
+export async function sendWeeklyNewsletters() {
   console.log("[NEWSLETTER] Starting weekly newsletter run...");
-  const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const currentWeek = getISOWeekString();
 
   for (const [subpageId, listId] of Object.entries(LIST_ID_MAP)) {
     try {
-      // const items = await NewsItem.find({
-      //   subpageId,
-      //   createdAt: { $gte: oneWeekAgo },
-      // })
-      //   .sort({ createdAt: -1 })
-      //   .limit(5);
-
-      const items = await NewsItem.find({
-        subpageId,
-        createdAt: { $gte: oneWeekAgo },
-      })
-        .sort({ clicks: -1, createdAt: -1 }) 
-        .limit(5);
+      const items = await getTopNewsItems(subpageId);
 
       if (!items.length) {
         console.log(
@@ -164,6 +301,16 @@ async function sendWeeklyNewsletters() {
 
       const html = buildEmailHtml(subpageId, items);
       await sendCampaignToList(subpageId, listId, html);
+
+      const sourceName = Object.keys(SOURCE_TO_SUBPAGE).find(
+        (key) => SOURCE_TO_SUBPAGE[key] === subpageId
+      );
+      if (sourceName) {
+        await Subscriber.updateMany(
+          { source: sourceName, active: true },
+          { lastSentWeek: currentWeek, lastNewsletterSentAt: new Date() }
+        );
+      }
     } catch (err) {
       console.error(`[NEWSLETTER] Error processing ${subpageId}:`, err.message);
     }

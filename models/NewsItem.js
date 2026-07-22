@@ -39,6 +39,7 @@ const NewsItemSchema = new mongoose.Schema({
 });
 
 NewsItemSchema.index({ subpageId: 1, date: -1 });
+NewsItemSchema.index({ subpageId: 1, clicks: -1, createdAt: -1 });
 
 const NewsItem = mongoose.model("NewsItem", NewsItemSchema);
 export default NewsItem;

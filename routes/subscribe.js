@@ -29,7 +29,7 @@
 // export default  router;
 
 
-import express from "express"
+import express from "express";
 const router = express.Router();
 import Subscriber from '../models/Subscriber.js';
 
@@ -47,56 +47,76 @@ const LIST_ID_MAP = {
   Goldsmithing: 12,
   JewelryResale: 13,
   MetalDetecting: 14,
-  homepage:15
+  homepage: 15
 };
 
-router.post('/', async (req, res) => {
-  const { email, source, gdprConsent } = req.body;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (!gdprConsent) 
+router.post('/', async (req, res) => {
+  const { email, source, timezone, gdprConsent } = req.body;
+
+  if (!gdprConsent) {
     return res.status(400).json({ error: 'GDPR consent required' });
-  if (!email || !email.includes('@')) 
-    return res.status(400).json({ error: 'Invalid email' });
+  }
+
+  if (!email || typeof email !== 'string' || !EMAIL_REGEX.test(email.trim())) {
+    return res.status(400).json({ error: 'Invalid email address' });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const subSource = source || 'homepage';
+  const userTimezone = timezone || 'Europe/Berlin';
 
   try {
-    await Subscriber.create({ 
-      email, 
-      source: source || 'homepage', 
-      gdprConsent 
-    });
+    // Upsert to handle duplicates cleanly and update source/timezone
+    await Subscriber.findOneAndUpdate(
+      { email: cleanEmail },
+      {
+        email: cleanEmail,
+        source: subSource,
+        timezone: userTimezone,
+        gdprConsent: true,
+        active: true
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 
+    // Sync to Brevo contact list
     try {
-      const listId = LIST_ID_MAP[source];
+      const listId = LIST_ID_MAP[subSource];
       const listIds = listId ? [listId] : [];
 
-      const brevoRes = await fetch('https://api.brevo.com/v3/contacts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': process.env.BREVO_API_KEY,
-        },
-        body: JSON.stringify({
-          email: email,
-          attributes: {
-            SOURCE: source || 'homepage',
+      if (process.env.BREVO_API_KEY) {
+        const brevoRes = await fetch('https://api.brevo.com/v3/contacts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'api-key': process.env.BREVO_API_KEY,
           },
-          listIds: listIds,
-          updateEnabled: true,
-        }),
-      });
+          body: JSON.stringify({
+            email: cleanEmail,
+            attributes: {
+              SOURCE: subSource,
+              TIMEZONE: userTimezone
+            },
+            listIds: listIds,
+            updateEnabled: true,
+          }),
+        });
 
-      if (!brevoRes.ok) {
-        const errData = await brevoRes.json();
-        console.error('Brevo sync failed:', errData);
+        if (!brevoRes.ok) {
+          const errData = await brevoRes.json().catch(() => null);
+          console.error('Brevo sync failed:', errData);
+        }
       }
     } catch (brevoErr) {
       console.error('Brevo sync error:', brevoErr.message);
     }
 
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (err) {
-    if (err.code === 11000) return res.json({ success: true });
-    res.status(500).json({ error: 'Server error' });
+    console.error('Subscription DB error:', err.message);
+    return res.status(500).json({ error: 'Server error' });
   }
 });
 

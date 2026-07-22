@@ -47,7 +47,9 @@
 import cron from "node-cron";
 import priceAgent from "./priceAgent.js";
 import { runAllAgents } from "../runAgents.js";
-import sendWeeklyNewsletters from "./newsletterAgent.js";
+import sendWeeklyNewsletters, {
+  sendWeeklyNewslettersTimezoneAware,
+} from "./newsletterAgent.js";
 
 const startScheduler = async () => {
   console.log("[SCHEDULER] Starting...");
@@ -63,12 +65,18 @@ const startScheduler = async () => {
 
   console.log("[SCHEDULER] Initialized ");
 
-  cron.schedule("0 6 * * *", async () => {
-    console.log("[SCHEDULER] Running daily agents...");
-    await runAllAgents();
-    console.log("[SCHEDULER] All agents done ");
-  }, { timezone: "Europe/Berlin" });
+  // ───── DAILY NEWS AGENTS ─────
+  cron.schedule(
+    "0 6 * * *",
+    async () => {
+      console.log("[SCHEDULER] Running daily agents...");
+      await runAllAgents();
+      console.log("[SCHEDULER] All agents done ");
+    },
+    { timezone: "Europe/Berlin" }
+  );
 
+  // ───── PRICE AGENT (15 min) ─────
   cron.schedule("*/15 * * * *", async () => {
     try {
       await priceAgent();
@@ -77,14 +85,28 @@ const startScheduler = async () => {
     }
   });
 
-  cron.schedule("59 17 * * 0", async () => {
-    console.log("[SCHEDULER] Sending weekly newsletters...");
+  // ───── TIMEZONE-AWARE WEEKLY NEWSLETTER (Checks every hour at :59) ─────
+  cron.schedule("59 * * * *", async () => {
     try {
-      await sendWeeklyNewsletters();
+      await sendWeeklyNewslettersTimezoneAware();
     } catch (err) {
-      console.error("[NEWSLETTER ERROR]", err.message);
+      console.error("[NEWSLETTER TZ ERROR]", err.message);
     }
-  }, { timezone: "Europe/Berlin" });
+  });
+
+  // ───── SUNDAY 17:59 FALLBACK WEEKLY NEWSLETTER RUN ─────
+  cron.schedule(
+    "59 17 * * 0",
+    async () => {
+      console.log("[SCHEDULER] Sending weekly newsletters...");
+      try {
+        await sendWeeklyNewsletters();
+      } catch (err) {
+        console.error("[NEWSLETTER ERROR]", err.message);
+      }
+    },
+    { timezone: "Europe/Berlin" }
+  );
 };
 
 startScheduler();
