@@ -108,7 +108,10 @@ async function sendCampaignToList(subpageId, listId, htmlContent) {
   const createData = await createRes.json();
 
   if (!createRes.ok) {
-    console.error(`[NEWSLETTER] Campaign creation failed for ${subpageId}:`, createData);
+    console.error(
+      `[NEWSLETTER] Campaign creation failed for ${subpageId}:`,
+      createData,
+    );
     return;
   }
 
@@ -126,7 +129,9 @@ async function sendCampaignToList(subpageId, listId, htmlContent) {
     const sendData = await sendRes.json().catch(() => null);
     console.error(`[NEWSLETTER] Send failed for ${subpageId}:`, sendData);
   } else {
-    console.log(`[NEWSLETTER] Sent successfully for ${subpageId} (list ${listId})`);
+    console.log(
+      `[NEWSLETTER] Sent successfully for ${subpageId} (list ${listId})`,
+    );
   }
 }
 
@@ -136,15 +141,24 @@ async function sendWeeklyNewsletters() {
 
   for (const [subpageId, listId] of Object.entries(LIST_ID_MAP)) {
     try {
+      // const items = await NewsItem.find({
+      //   subpageId,
+      //   createdAt: { $gte: oneWeekAgo },
+      // })
+      //   .sort({ createdAt: -1 })
+      //   .limit(5);
+
       const items = await NewsItem.find({
         subpageId,
         createdAt: { $gte: oneWeekAgo },
       })
-        .sort({ createdAt: -1 })
+        .sort({ clicks: -1, createdAt: -1 }) 
         .limit(5);
 
       if (!items.length) {
-        console.log(`[NEWSLETTER] No news this week for ${subpageId}, skipping.`);
+        console.log(
+          `[NEWSLETTER] No news this week for ${subpageId}, skipping.`,
+        );
         continue;
       }
 

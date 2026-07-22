@@ -12,7 +12,7 @@ import summary from "./routes/summary.js";
 import searchRoutes from "./routes/searchRoutes.js";
 import latest from "./routes/latest.js";
 import cronRoutes from "./routes/cron.js";
-
+import trackClickRoute from "./routes/trackClick.js";
 const app = express();
 
 // Robust CORS origin setup (strips trailing slashes and handles standard/dev origins)
@@ -50,6 +50,7 @@ app.use("/api/summary", summary);
 app.use("/api/search", searchRoutes);
 app.use("/api/new", latest);
 app.use("/api/cron", cronRoutes);
+app.use("/api/news", trackClickRoute);
 
 const PORT = process.env.PORT || 5000;
 
