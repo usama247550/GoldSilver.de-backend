@@ -61,7 +61,7 @@ async function run() {
       await NewsItem.create({
         subpageId: SUBPAGE_ID,
 
-        // 🔥 model ke hisaab se correct fields
+        //  model ke hisaab se correct fields
         headline: article.title,
         sourceUrl: article.url || article.link,
         summary: summary?.summary || "no-summary",
@@ -78,7 +78,7 @@ async function run() {
     }
   }
   console.log(
-    `[SP1] Done ✅ Saved ${finalArticles.length} articles for ${SUBPAGE_ID}`,
+    `[SP1] Done  Saved ${finalArticles.length} articles for ${SUBPAGE_ID}`,
   );
 }
 
