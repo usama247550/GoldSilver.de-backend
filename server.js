@@ -12,7 +12,7 @@ import summary from "./routes/summary.js";
 import searchRoutes from "./routes/searchRoutes.js";
 import latest from "./routes/latest.js";
 import cronRoutes from "./routes/cron.js";
-
+import trackClickRoute from "./routes/trackClick.js";
 const app = express();
 
 // Robust CORS origin setup (strips trailing slashes and handles standard/dev origins)
@@ -21,21 +21,25 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
   "https://www.goldsilver.de",
-  "https://goldsilver.de"
-].map(url => url ? url.trim().replace(/\/$/, "") : null).filter(Boolean);
+  "https://goldsilver.de",
+]
+  .map((url) => (url ? url.trim().replace(/\/$/, "") : null))
+  .filter(Boolean);
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, curl, or server-to-server)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.warn(`[CORS] Blocked request from origin: ${origin}`);
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`[CORS] Blocked request from origin: ${origin}`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  }),
+);
 
 app.use(express.json());
 
@@ -46,6 +50,7 @@ app.use("/api/summary", summary);
 app.use("/api/search", searchRoutes);
 app.use("/api/new", latest);
 app.use("/api/cron", cronRoutes);
+app.use("/api/news", trackClickRoute);
 
 const PORT = process.env.PORT || 5000;
 

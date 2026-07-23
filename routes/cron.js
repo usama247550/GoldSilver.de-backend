@@ -1,6 +1,7 @@
 import express from "express";
 import priceAgent from "../agents/priceAgent.js";
 import { runAllAgents } from "../runAgents.js";
+import { sendWeeklyNewslettersTimezoneAware } from "../agents/newsletterAgent.js";
 
 const router = express.Router();
 
@@ -38,6 +39,18 @@ router.get("/news", verifyCronSecret, async (req, res) => {
     res.json({ success: true, message: "News agents run successfully" });
   } catch (err) {
     console.error("[CRON NEWS ERROR]", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/cron/newsletter — temporary test endpoint for timezone-aware newsletter delivery
+router.get("/newsletter", verifyCronSecret, async (req, res) => {
+  console.log("[CRON] Triggered timezone-aware newsletter send...");
+  try {
+    await sendWeeklyNewslettersTimezoneAware();
+    res.json({ success: true });
+  } catch (err) {
+    console.error("[CRON NEWSLETTER ERROR]", err.message);
     res.status(500).json({ error: err.message });
   }
 });

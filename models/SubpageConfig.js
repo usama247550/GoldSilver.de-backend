@@ -10,4 +10,4 @@ const SubpageConfigSchema = new mongoose.Schema({
   newsSources:  [{ type: String }]
 });
 
-module.exports = mongoose.model('SubpageConfig', SubpageConfigSchema);
+export default mongoose.model('SubpageConfig', SubpageConfigSchema);
