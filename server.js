@@ -3,6 +3,7 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
+import mongoose from "mongoose";
 import connectDataBase from "./config/db.js";
 
 import news from "./routes/news.js";
@@ -42,6 +43,10 @@ app.use(
 );
 
 app.use(express.json());
+
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", db: mongoose.connection.readyState === 1 ? "connected" : "disconnected", ts: new Date().toISOString() });
+});
 
 app.use("/api/news", news);
 app.use("/api/prices", price);

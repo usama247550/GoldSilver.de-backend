@@ -12,14 +12,5 @@
       "dest": "server.js"
     }
   ],
-  "crons": [
-    {
-      "path": "/api/cron/prices",
-      "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/cron/news",
-      "schedule": "0 6 * * *"
-    }
-  ]
+  "crons": []
 }
