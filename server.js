@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import mongoose from "mongoose";
 import connectDataBase from "./config/db.js";
 
 import news from "./routes/news.js";
@@ -51,6 +52,8 @@ app.use(async (req, res, next) => {
     console.error("DB connection failed for request:", err.message);
     res.status(503).json({ error: "Database temporarily unavailable" });
   }
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", db: mongoose.connection.readyState === 1 ? "connected" : "disconnected", ts: new Date().toISOString() });
 });
 
 app.use("/api/news", news);
