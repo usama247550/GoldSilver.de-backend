@@ -14,7 +14,8 @@ async function run() {
         headers: { "x-access-token": process.env.METALS_API_KEY },
       }),
     ]);
-
+    
+    
     const [goldData, silverData] = await Promise.all([
       goldRes.json(),
       silverRes.json(),
