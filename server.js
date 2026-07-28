@@ -146,11 +146,11 @@ app.use("/api/prices", price);
 app.use("/api/subscribe", subscribe);
 app.use("/api/summary", summary);
 app.use("/api/search", searchRoutes);
-app.use("/api/new", latest);
+app.use("/api", latest);
 app.use("/api/cron", cronRoutes);
 app.use("/api/news", trackClickRoute);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;``
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {

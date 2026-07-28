@@ -14,7 +14,7 @@ async function scrapeUrl(url) {
 
     const normalize = (t) => t.toLowerCase().replace(/\s+/g, " ").trim();
 
-    // STEP 1: Try strict method first (article containers)
+    // STEP 1: Try strict method first (article containers)a
     $("article, .article, .news-item")
       .slice(0, 5)
       .each((i, el) => {
