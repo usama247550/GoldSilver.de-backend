@@ -195,7 +195,7 @@ function isSunday1759InTimezone(timeZone, date = new Date()) {
       if (part.type === "weekday") weekday = part.value;
       if (part.type === "hour") hour = parseInt(part.value, 10);
     }
-    return weekday === "Sun" && hour === 17;
+    return weekday === "Sun" && hour === 8;
   } catch (err) {
     return false;
   }

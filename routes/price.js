@@ -18,16 +18,34 @@ router.get("/", async (req, res) => {
     }
 
     // ───────── Clean response — only what frontend needs ─────────
-    const response = {
-      gold_usd:   { value: prices.gold_usd,   change: calcChange(prices.gold_usd,   prices.gold_usd_prev)   },
-      silver_usd: { value: prices.silver_usd, change: calcChange(prices.silver_usd, prices.silver_usd_prev) },
-      btc_usd:    { value: prices.btc_usd,    change: calcChange(prices.btc_usd,    prices.btc_usd_prev)    },
-      eth_usd:    { value: prices.eth_usd,    change: calcChange(prices.eth_usd,    prices.eth_usd_prev)    },
-      eur_usd:    { value: prices.eur_usd,    change: calcChange(prices.eur_usd,    prices.eur_usd_prev)    },
-      cpi:        { value: prices.cpi,        change: calcChange(prices.cpi,        prices.cpi_prev)        },
-      updatedAt:  prices.updatedAt,
-    };
-
+    // const response = {
+    //   gold_usd:   { value: prices.gold_usd,   change: calcChange(prices.gold_usd,   prices.gold_usd_prev)   },
+    //   silver_usd: { value: prices.silver_usd, change: calcChange(prices.silver_usd, prices.silver_usd_prev) },
+    //   btc_usd:    { value: prices.btc_usd,    change: calcChange(prices.btc_usd,    prices.btc_usd_prev)    },
+    //   eth_usd:    { value: prices.eth_usd,    change: calcChange(prices.eth_usd,    prices.eth_usd_prev)    },
+    //   eur_usd:    { value: prices.eur_usd,    change: calcChange(prices.eur_usd,    prices.eur_usd_prev)    },
+    //   cpi:        { value: prices.cpi,        change: calcChange(prices.cpi,        prices.cpi_prev)        },
+    //   updatedAt:  prices.updatedAt,
+    // };
+const response = {
+  gold_usd:   { value: prices.gold_usd,   change: calcChange(prices.gold_usd,   prices.gold_usd_prev)   },
+  silver_usd: { value: prices.silver_usd, change: calcChange(prices.silver_usd, prices.silver_usd_prev) },
+  btc_usd:    { value: prices.btc_usd,    change: calcChange(prices.btc_usd,    prices.btc_usd_prev)    },
+  eth_usd:    { value: prices.eth_usd,    change: calcChange(prices.eth_usd,    prices.eth_usd_prev)    },
+  eur_usd:    { value: prices.eur_usd,    change: calcChange(prices.eur_usd,    prices.eur_usd_prev)    },
+  cpi:        { value: prices.cpi,        change: calcChange(prices.cpi,        prices.cpi_prev)        },
+  updatedAt: prices.updatedAt, // raw UTC — ISO string, database ka original
+  updatedAtPKT: new Intl.DateTimeFormat("en-PK", {
+    timeZone: "Asia/Karachi",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  }).format(new Date(prices.updatedAt)),
+};
     res.json(response);
   } catch (err) {
     console.error("[PRICE ROUTE ERROR]", err.message);
@@ -36,3 +54,5 @@ router.get("/", async (req, res) => {
 });
 
 export default router;
+
+
