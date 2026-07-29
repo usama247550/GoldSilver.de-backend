@@ -1,4 +1,6 @@
-// import "dotenv/config";
+// import dotenv from "dotenv";
+// dotenv.config();
+
 // import express from "express";
 // import cors from "cors";
 // import mongoose from "mongoose";
@@ -12,7 +14,6 @@
 // import latest from "./routes/latest.js";
 // import cronRoutes from "./routes/cron.js";
 // import trackClickRoute from "./routes/trackClick.js";
-
 // const app = express();
 
 // // Robust CORS origin setup (strips trailing slashes and handles standard/dev origins)
@@ -43,15 +44,6 @@
 
 // app.use(express.json());
 
-
-// app.use(async (req, res, next) => {
-//   try {
-//     await connectDataBase();
-//     next();
-//   } catch (err) {
-//     console.error("DB connection failed for request:", err.message);
-//     res.status(503).json({ error: "Database temporarily unavailable" });
-//   }
 // app.get("/api/health", (req, res) => {
 //   res.json({ status: "ok", db: mongoose.connection.readyState === 1 ? "connected" : "disconnected", ts: new Date().toISOString() });
 // });
@@ -61,34 +53,30 @@
 // app.use("/api/subscribe", subscribe);
 // app.use("/api/summary", summary);
 // app.use("/api/search", searchRoutes);
-// app.use("/api/new", latest);
+// app.use("/api", latest);
 // app.use("/api/cron", cronRoutes);
 // app.use("/api/news", trackClickRoute);
 
-// const PORT = process.env.PORT || 5000;
+// const PORT = process.env.PORT || 5000;``
 
-// // Connect to MongoDB FIRST, then start listening
-// const start = async () => {
-//   await connectDataBase();
+// if (!process.env.VERCEL) {
+//   app.listen(PORT, () => {
+//     console.log(`Server running on port ${PORT}`);
+//   });
+// }
 
+// connectDataBase().then(() => {
 //   if (!process.env.VERCEL) {
-//     app.listen(PORT, () => {
-//       console.log(`Server running on port ${PORT}`);
-//     });
-
 //     import("./agents/scheduler.js").then(() => {
 //       console.log("[SERVER] Scheduler loaded successfully");
 //     });
 //   } else {
 //     console.log("[SERVER] Serverless mode: Scheduler execution bypassed");
 //   }
-// };
-
-// start().catch((err) => {
-//   console.error("[SERVER] Startup error:", err.message);
 // });
 
 // export default app;
+
 
 
 import dotenv from "dotenv";
@@ -107,6 +95,7 @@ import searchRoutes from "./routes/searchRoutes.js";
 import latest from "./routes/latest.js";
 import cronRoutes from "./routes/cron.js";
 import trackClickRoute from "./routes/trackClick.js";
+
 const app = express();
 
 // Robust CORS origin setup (strips trailing slashes and handles standard/dev origins)
@@ -137,8 +126,23 @@ app.use(
 
 app.use(express.json());
 
+// ✅ Ensure DB is connected before handling any request (critical for serverless/Vercel)
+app.use(async (req, res, next) => {
+  try {
+    await connectDataBase();
+    next();
+  } catch (err) {
+    console.error("[DB] Connection failed for request:", err.message);
+    res.status(503).json({ error: "Database temporarily unavailable" });
+  }
+});
+
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", db: mongoose.connection.readyState === 1 ? "connected" : "disconnected", ts: new Date().toISOString() });
+  res.json({
+    status: "ok",
+    db: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+    ts: new Date().toISOString(),
+  });
 });
 
 app.use("/api/news", news);
@@ -150,22 +154,20 @@ app.use("/api", latest);
 app.use("/api/cron", cronRoutes);
 app.use("/api/news", trackClickRoute);
 
-const PORT = process.env.PORT || 5000;``
+const PORT = process.env.PORT || 5000;
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
-}
 
-connectDataBase().then(() => {
-  if (!process.env.VERCEL) {
+  connectDataBase().then(() => {
     import("./agents/scheduler.js").then(() => {
       console.log("[SERVER] Scheduler loaded successfully");
     });
-  } else {
-    console.log("[SERVER] Serverless mode: Scheduler execution bypassed");
-  }
-});
+  });
+} else {
+  console.log("[SERVER] Serverless mode: Scheduler execution bypassed");
+}
 
 export default app;
